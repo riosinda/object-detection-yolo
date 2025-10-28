@@ -1,176 +1,239 @@
-# object-detection-yolo
+# Object Detection with YOLOv5 - SKU-110K Dataset
 
-## Tools used in this project
+Este proyecto implementa detección de objetos utilizando YOLOv5 en el dataset SKU-110K, un conjunto de datos de productos de tiendas retail con más de 110,000 anotaciones.
 
-* [hydra](https://hydra.cc/): Manage configuration files - [article](https://codecut.ai/stop-hard-coding-in-a-data-science-project-use-configuration-files-instead/)
-* [pdoc](https://github.com/pdoc3/pdoc): Automatically create an API documentation for your project
-* [pre-commit plugins](https://pre-commit.com/): Automate code reviewing formatting
-* [uv](https://github.com/astral-sh/uv): Ultra-fast Python package installer and resolver
+## 📋 Tabla de Contenidos
+- [Requisitos](#requisitos)
+- [Instalación](#instalación)
+- [Descarga del Dataset](#descarga-del-dataset)
+- [Configuración de YOLOv5](#configuración-de-yolov5)
+- [Exploración y Preparación de Datos](#exploración-y-preparación-de-datos)
+- [Entrenamiento del Modelo](#entrenamiento-del-modelo)
+- [Evaluación](#evaluación)
+- [Estructura del Proyecto](#estructura-del-proyecto)
 
-## Project Structure
+## 🔧 Requisitos
 
-```bash
-.
-├── config
-│   ├── main.yaml                   # Main configuration file
-│   ├── model                       # Configurations for training model
-│   │   ├── model1.yaml             # First variation of parameters to train model
-│   │   └── model2.yaml             # Second variation of parameters to train model
-│   └── process                     # Configurations for processing data
-│       ├── process1.yaml           # First variation of parameters to process data
-│       └── process2.yaml           # Second variation of parameters to process data
-├── data
-│   ├── final                       # data after training the model
-│   ├── processed                   # data after processing
-│   └── raw                         # raw data
-├── docs                            # documentation for your project
-├── .gitignore                      # ignore files that cannot commit to Git
-├── models                          # store models
-├── notebooks                       # store notebooks
-├── .pre-commit-config.yaml         # configurations for pre-commit
-├── .python-version                 # specify Python version for the project
-├── pyproject.toml                  # project metadata and dependencies
-├── README.md                       # describe your project
-├── src                             # store source code
-│   ├── __init__.py                 # make src a Python module
-│   ├── process.py                  # process data before training model
-│   ├── train_model.py              # train model
-│   └── utils.py                    # store helper functions
-└── tests                           # store tests
-    ├── __init__.py                 # make tests a Python module
-    ├── test_process.py             # test functions for process.py
-    └── test_train_model.py         # test functions for train_model.py
-```
+- Python 3.12
+- CUDA 12.6+ (para entrenamiento con GPU)
+- 13.6 GB de espacio libre en disco para el dataset
+- Credenciales de AWS (para descarga del dataset)
 
-## Version Control Setup
+## 📦 Instalación
 
-1. Initialize Git in your project directory:
-```bash
-git init
-```
-
-2. Add your remote repository:
-```bash
-# For HTTPS
-git remote add origin https://github.com/username/repository-name.git
-
-# For SSH
-git remote add origin git@github.com:username/repository-name.git
-```
-
-3. Create and switch to a new branch:
-```bash
-git checkout -b main
-```
-
-4. Add and commit your files:
-```bash
-git add .
-git commit -m "Initial commit"
-```
-
-5. Push to your remote repository:
-```bash
-git push -u origin main
-```
-
-## Set up the environment
-1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/)
-
-2. Install dependencies:
-
-- To install all dependencies from pyproject.toml, run:
+### 1. Clonar el repositorio
 
 ```bash
-uv sync --all-extras
+git clone https://github.com/tu-usuario/object-detection-yolo.git
+cd object-detection-yolo
 ```
 
-- To install only production dependencies, run:
+### 2. Crear un entorno virtual (recomendado)
 
 ```bash
-uv sync
+# Windows
+python -m venv .venv
+.venv\Scripts\activate
+
+# Linux/Mac
+python -m venv .venv
+source .venv/bin/activate
 ```
 
-Note: To follow the rest of the instructions in this README (including running tests, generating documentation, and using pre-commit hooks), it is recommended to install all dependencies using `uv sync --all-extras`.
-
-3. Run Python scripts:
+### 3. Instalar dependencias
 
 ```bash
-uv run src/process.py
+pip install -r requirements.txt
 ```
 
-## Set up pre-commit hooks
-Set up pre-commit:
+El archivo `requirements.txt` incluye todas las dependencias necesarias:
+- PyTorch y TorchVision (con soporte CUDA)
+- OpenCV
+- Pandas, NumPy, Matplotlib, Seaborn
+- Ultralytics
+- Boto3 (para descarga de AWS)
+- Y más...
+
+## 📥 Descarga del Dataset
+
+### Configurar credenciales de AWS
+
+El dataset SKU-110K se descarga desde un bucket de AWS S3. Necesitas configurar tus credenciales:
+
+1. Crea un archivo `.env` en la raíz del proyecto:
+
 ```bash
-uv run pre-commit install
+# .env
+AWS_ACCESS_KEY_ID=tu_access_key_aqui
+AWS_SECRET_ACCESS_KEY=tu_secret_key_aqui
 ```
 
-The pre-commit configuration is already set up in `.pre-commit-config.yaml`. This includes:
-* `ruff`: A fast Python linter and code formatter that will automatically fix issues when possible
-* `black`: Python code formatting to ensure consistent code style
-* `mypy`: Static type checking for Python to catch type-related errors before runtime
+### Ejecutar script de descarga
 
-Pre-commit will now run automatically on every commit. If any checks fail, the commit will be aborted and the issues will be automatically fixed when possible.
-
-## View and alter configurations
-
-The project uses Hydra to manage configurations. You can view and modify these configurations from the command line.
-
-To view available configurations:
 ```bash
-uv run src/process.py --help
+python src/download_data.py
 ```
 
-Output:
+Este script descargará automáticamente:
+- Imágenes de entrenamiento, validación y test
+- Anotaciones en formato CSV
+- Estructura completa del dataset en `data/SKU110K_dataset/`
+
+**Nota:** La descarga puede tomar varios minutos dependiendo de tu conexión (13.6 GB).
+
+## 🔨 Configuración de YOLOv5
+
+### 1. Clonar el repositorio de YOLOv5
+
+```bash
+git clone https://github.com/ultralytics/yolov5.git
+cd yolov5
+cd ..
+```
+
+### 2. Crear archivo de configuración del dataset
+
+Crea el archivo `yolov5/data/dataset.yaml` con la siguiente configuración:
 
 ```yaml
-process is powered by Hydra.
+path: ../data/SKU110K_dataset
 
-== Configuration groups ==
-Compose your configuration from those groups (group=option)
+train: images/train
+val: images/val
+test: images/test
 
-model: model1, model2
-process: process1, process2
-
-
-== Config ==
-Override anything in the config (foo.bar=value)
-
-process:
-  use_columns:
-  - col1
-  - col2
-model:
-  name: model1
-data:
-  raw: data/raw/sample.csv
-  processed: data/processed/processed.csv
-  final: data/final/final.csv
+names:
+  1: object
+  0: empty
 ```
 
-To override configurations (for example, changing the input data file):
+**Notas importantes:**
+- Asegúrate de que las rutas coincidan con la estructura de tu dataset
+- Si usaste el script `src/download_data.py`, el dataset estará en `data/SKU110K_dataset/`
+- Las etiquetas (labels) deben estar en formato YOLO en las carpetas correspondientes
+
+### 3. Verificar estructura del dataset
+
+Tu estructura de carpetas debe verse así:
+
+```
+object-detection-yolo/
+├── data/
+│   └── SKU110K_dataset/
+│       ├── images/
+│       │   ├── train/
+│       │   ├── val/
+│       │   └── test/
+│       ├── labels/
+│       │   ├── train/
+│       │   ├── val/
+│       │   └── test/
+│       └── annotations/
+└── yolov5/
+    └── data/
+        └── dataset.yaml  # Tu archivo de configuración
+```
+
+## 📊 Exploración y Preparación de Datos
+
+Ejecuta los notebooks de Jupyter en orden para explorar y preparar los datos:
+
+### 1. Análisis Exploratorio de Datos (EDA)
+
 ```bash
-uv run src/process.py data.raw=sample2.csv
+jupyter notebook notebooks/1_EDA.ipynb
 ```
 
-Output:
+Este notebook incluye:
+- Análisis de distribución de objetos
+- Visualización de imágenes de muestra
+- Estadísticas del dataset
+- Análisis de tamaños de bounding boxes
 
-```
-Process data using sample2.csv
-Columns used: ['col1', 'col2']
-```
+### 2. Preparación de Datos
 
-You can override any configuration value shown in the help output. Multiple overrides can be combined in a single command. For more information about Hydra's configuration system, visit the [official documentation](https://hydra.cc/docs/intro/).
-
-## Auto-generate API documentation
-Generate static documentation:
 ```bash
-uv run pdoc src -o docs
+jupyter notebook notebooks/2_Prepare_data.ipynb
 ```
 
-Start documentation server (available at http://localhost:8080):
+Este notebook realiza:
+- Conversión de anotaciones CSV al formato YOLO
+- Validación de etiquetas
+- División de datos (train/val/test)
+- Creación de archivos de configuración
+
+### 3. Test del Modelo Entrenado
+
 ```bash
-uv run pdoc src --http localhost:8080
+jupyter notebook notebooks/3_Test_trained_model.ipynb
 ```
 
-The documentation will be generated from your docstrings and type hints in your Python files. The static documentation will be saved in the `docs` directory, while the live server allows you to view the documentation with hot-reloading as you make changes.
+Este notebook permite:
+- Cargar el modelo entrenado
+- Realizar inferencias
+- Visualizar predicciones
+- Evaluar métricas de rendimiento
+
+## 🚀 Entrenamiento del Modelo
+
+### Entrenamiento Básico
+
+Una vez completada la configuración, entrena el modelo con YOLOv5:
+
+```bash
+cd yolov5
+python train.py --img 640 --batch 16 --epochs 3 --dataset.yaml --weights yolov5s.pt
+```
+
+### Parámetros del entrenamiento
+
+- `--data`: Ruta al archivo de configuración del dataset
+- `--weights`: Pesos preentrenados (yolov5s.pt, yolov5m.pt, yolov5l.pt, yolov5x.pt)
+- `--img`: Tamaño de imagen (640, 1280, etc.)
+- `--batch`: Tamaño del batch (ajustar según tu GPU)
+- `--epochs`: Número de épocas
+- `--name`: Nombre del experimento
+
+## 📁 Estructura del Proyecto
+
+```
+object-detection-yolo/
+├── config/                      # Archivos de configuración
+│   ├── main.yaml
+│   ├── model/
+│   └── process/
+├── data/                        # Datasets
+│   └── SKU110K_dataset/
+│       ├── images/
+│       ├── labels/
+│       └── annotations/
+├── models/                      # Modelos entrenados
+│   └── best.pt
+├── notebooks/                   # Jupyter notebooks
+│   ├── 1_EDA.ipynb
+│   ├── 2_Prepare_data.ipynb
+│   └── 3_Test_trained_model.ipynb
+├── src/                         # Código fuente
+│   ├── download_data.py         # Script de descarga del dataset
+│   ├── process.py               # Procesamiento de datos
+│   ├── train_model.py           # Entrenamiento
+│   └── utils.py                 # Utilidades
+├── tests/                       # Tests unitarios
+├── yolov5/                      # Repositorio de YOLOv5 (clonar)
+├── requirements.txt             # Dependencias
+└── README.md                    # Este archivo
+```
+
+## 📚 Referencias
+
+- [YOLOv5 Documentation](https://docs.ultralytics.com/yolov5/)
+- [SKU-110K Dataset Paper](https://arxiv.org/abs/1904.00853)
+- [YOLOv5 GitHub](https://github.com/ultralytics/yolov5)
+
+## 📄 Licencia
+
+Este proyecto es para fines educativos. El dataset SKU-110K y YOLOv5 tienen sus propias licencias.
+
+## 🤝 Contribuciones
+
+Las contribuciones son bienvenidas. Por favor, abre un issue o pull request para sugerencias o mejoras.
