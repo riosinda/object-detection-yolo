@@ -45,3 +45,21 @@ def order_images(destination_dir: str):
         shutil.move(full_path, dst)
 
     print("Images ordered succesfully.")
+
+def add_new_labels(new_labels_path: str, labels_path: str):
+    labels = os.listdir(new_labels_path)
+    for label in labels:
+        name_file = label.split("-")[1]
+        if name_file.endswith(".txt"):
+            src = os.path.join(new_labels_path, label)
+            prefix = name_file.split("_")[0]
+            dst = os.path.join(labels_path, prefix, name_file)
+            
+            if os.path.exists(dst):
+                with open(src, "r") as f_new, open(dst, "a") as f_old:
+                    new_content = f_new.read().strip()
+                    if new_content:
+                        f_old.write(new_content)
+            else:
+                shutil.move(src, dst)
+    print("New labels added successfully.")
