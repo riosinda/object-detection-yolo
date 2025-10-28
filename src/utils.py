@@ -20,34 +20,28 @@ def convert_to_yolo_format(df: pd.DataFrame, output_dir: str):
             label_path, sep=" ", header=False, index=False
         )
     
-    print(f"✅ Conversión completa. Archivos guardados en {output_dir}")
+    print(f"Conversion complete. Files saved in {output_dir}")
 
 
-def order_images(destination_dir: str): # ../data/SKU110K_dataset/images/
+def order_images(destination_dir: str):
 
-    # Crear subcarpetas
     for subset in ["test", "train", "val"]:
         os.makedirs(os.path.join(destination_dir, subset), exist_ok=True)
 
-    # Recorrer las imágenes en el directorio raíz
     for img_file in os.listdir(destination_dir):
         full_path = os.path.join(destination_dir, img_file)
 
-        # Saltar si no es imagen o ya es una carpeta
         if not os.path.isfile(full_path) or not img_file.lower().endswith((".jpg", ".jpeg", ".png")):
             continue
 
-        prefix = img_file.split("_")[0].lower()  # 'test' de 'test_12.jpg'
+        prefix = img_file.split("_")[0].lower()
 
-        # Verificar prefijos válidos
         if prefix not in ["train", "val", "test"]:
             print(f"⚠️ Prefijo desconocido: {prefix} — se omite {img_file}")
             continue
 
-        # Ruta destino final
         dst = os.path.join(destination_dir, prefix, img_file)
 
-        # Mover imagen
         shutil.move(full_path, dst)
 
-    print("✅ Imágenes movidas correctamente según su prefijo ('train_', 'val_', 'test_').")
+    print("Images ordered succesfully.")
