@@ -94,7 +94,6 @@ outputs
 multirun
 
 # Data
-data/SKU110K_dataset/
+data/
 
-# Notebooks
-notebooks/*
+yolov5/
