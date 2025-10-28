@@ -11,8 +11,8 @@ def convert_to_yolo_format(df: pd.DataFrame, output_dir: str):
     df["height"] = (df["y2"] - df["y1"]) / df["image_height"]
 
     # convert class object to 0
-    df["class"] = df["class"].replace("object", 0)
-    df["class"] = df["class"].replace("empty", 1)
+    df["class"] = df["class"].replace("object", 1)
+    df["class"] = df["class"].replace("empty", 0)
 
     for img_name, group in df.groupby("image_name"):
         label_path = os.path.join(output_dir, os.path.splitext(img_name)[0] + ".txt")
