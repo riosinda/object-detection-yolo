@@ -46,20 +46,47 @@ def order_images(destination_dir: str):
 
     print("Images ordered succesfully.")
 
+def fix_label_names(folder_path: str):
+    """
+    Reemplaza '__' por '-' en los nombres de archivos dentro de folder_path.
+    """
+    for filename in os.listdir(folder_path):
+        if "__" in filename:
+            new_filename = filename.replace("__", "-")
+            src = os.path.join(folder_path, filename)
+            dst = os.path.join(folder_path, new_filename)
+            os.rename(src, dst)
+            print(f"Renombrado: {filename} -> {new_filename}")
+    print("Renombrado completado exitosamente.")
+
+
 def add_new_labels(new_labels_path: str, labels_path: str):
+    """
+    Añade nuevas etiquetas al dataset YOLO, ignorando archivos vacíos.
+    """
+    # Primero corrige los nombres
+    fix_label_names(new_labels_path)
+
     labels = os.listdir(new_labels_path)
     for label in labels:
-        name_file = label.split("-")[1]
+        name_file = label.split("-")[1] if "-" in label else label
         if name_file.endswith(".txt"):
             src = os.path.join(new_labels_path, label)
+
+            if os.path.getsize(src) == 0:
+                print(f"Ignorado (vacío): {label}")
+                os.remove(src)  # opcional: puedes eliminarlo si quieres
+                continue
+
             prefix = name_file.split("_")[0]
             dst = os.path.join(labels_path, prefix, name_file)
-            
+
             if os.path.exists(dst):
                 with open(src, "r") as f_new, open(dst, "a") as f_old:
                     new_content = f_new.read().strip()
                     if new_content:
-                        f_old.write(new_content)
+                        f_old.write("\n" + new_content)
             else:
                 shutil.move(src, dst)
+
     print("New labels added successfully.")
