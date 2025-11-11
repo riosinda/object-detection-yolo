@@ -1,0 +1,12 @@
+# Root directory of your dataset (relative to the YOLOv5 folder)
+path: ../data/SKU110K_dataset
+
+# Train/val/test image directories
+train: images/train
+val: images/val
+test: images/test
+
+# Class names
+names:
+  0: object
+  1: empty
